@@ -1,5 +1,6 @@
 package wintracker.service;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -10,6 +11,7 @@ public class TrackerDaemon implements Runnable {
 			);
 	private Set<String> openedWindows = new HashSet<>();
 	private Map<String, Integer> timeSpent = new ConcurrentHashMap<>();
+	private Map<String, LocalDate> lastDates = new ConcurrentHashMap<>();
 	
 	public TrackerDaemon() {
 		thread = new Thread(this, this.getClass().getName());
@@ -18,6 +20,10 @@ public class TrackerDaemon implements Runnable {
 	
 	public Map<String, Integer> getTimeSpent() {
 		return Map.copyOf(timeSpent);
+	}
+	
+	public LocalDate getLastDate(String forWindowsTile) {
+		return lastDates.get(forWindowsTile);
 	}
 	
 	public String stop() {
@@ -45,6 +51,7 @@ public class TrackerDaemon implements Runnable {
 						int openedFor = timeSpent.getOrDefault(title, 0);
 						openedFor += seconds;
 						timeSpent.put(title, openedFor);
+						lastDates.put(title, LocalDate.now());
 					} else {
 						openedWindows.add(title);
 					}
