@@ -27,7 +27,7 @@ public class CommandLine implements Runnable {
 						)
 				);
 		commands.put(
-				"/quit",
+				"/bye",
 				new CliCommand(
 						"quit",
 						() -> quit()

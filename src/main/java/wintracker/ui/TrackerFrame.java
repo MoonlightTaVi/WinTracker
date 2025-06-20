@@ -12,9 +12,16 @@ public class TrackerFrame {
 	
 	public TrackerFrame(final TrackerDaemon daemon) {
 		Map<String, Integer> seconds = daemon.getTimeSpent();
-		List<String> titles = new ArrayList<>(seconds.keySet());
 		// Latest first
-		titles.sort((a, b) -> daemon.getLastDate(b).compareTo(daemon.getLastDate(a)));
+		List<String> titles = new ArrayList<>(seconds.keySet())
+				.stream()
+				.sorted(
+						(a, b) -> daemon.getLastDate(b).compareTo(
+								daemon.getLastDate(a)
+								)
+						)
+				.limit(20)
+				.toList();
 		// Content panel with a single column
 		JPanel panel = new JPanel();
 		panel.setLayout(new GridLayout(0, 1));

@@ -1,12 +1,14 @@
 package wintracker;
 
 import wintracker.service.TrackerDaemon;
-import wintracker.ui.CommandLine;
+import wintracker.ui.*;
 
 public class WinTrackerApp {
 
 	public static void main(String[] args) {
-		CommandLine cli = new CommandLine(new TrackerDaemon());
+		TrackerDaemon daemon = new TrackerDaemon();
+		CommandLine cli = new CommandLine(daemon);
+		new InTrayIcon(() -> new TrackerFrame(daemon));
 		cli.run();
 	}
 	
