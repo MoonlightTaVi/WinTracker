@@ -1,92 +1,36 @@
 package wintracker.ui;
 
-import java.util.*;
-import java.util.Scanner;
-import java.util.function.Supplier;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.shell.standard.*;
 
+import lombok.Setter;
 import wintracker.service.TrackerDaemon;
 
-public class CommandLine implements Runnable {
-	private final TrackerDaemon daemon;
-	private Map<String, CliCommand> commands = new LinkedHashMap<>();
+@ShellComponent
+@ShellCommandGroup("[Window Tracker commands]")
+public class CommandLine {
+	@Autowired
+	@Setter
+	private ConfigurableApplicationContext context;
+	@Autowired
+	@Setter
+	private TrackerDaemon daemon;
 	
-	public CommandLine(TrackerDaemon daemon) {
-		this.daemon = daemon;
-		commands.put(
-				"/list",
-				new CliCommand(
-						"see tracked time",
-						() -> list()
-						)
-				);
-		commands.put(
-				"/gui",
-				new CliCommand(
-						"open the app window",
-						() -> openFrame()
-						)
-				);
-		commands.put(
-				"/bye",
-				new CliCommand(
-						"quit",
-						() -> quit()
-						)
-				);
-	}
-
-	@Override
-	public void run() {
-		// Show help tip
-		List<String> commandsHelp = new ArrayList<>();
-		for (String command : commands.keySet()) {
-			commandsHelp.add(
-					String.format(
-							"%s to %s",
-							command,
-							commands.get(command).description
-							)
-					);
-		}
-		System.out.printf("Type %s%n", String.join(", ", commandsHelp));
-		
-		try (Scanner scanner = new Scanner(System.in)) {
-			while (true) {
-				System.out.print(">: ");
-				String input = scanner.nextLine();
-				if (commands.containsKey(input)) {
-					// If user quits, command returns true
-					if (!commands.get(input).command.get()) {
-						break;
-					}
-					continue;
-				}
-				System.out.println("[Unknown command]");
-			}
-		}
-		System.out.println("[App stopped]");
-	}
-	
-	private boolean list() {
+	@ShellMethod(value = "list time spent using windows")
+	private String list() {
+		StringBuilder builder = new StringBuilder("\nTime spent in windows:\n");
 		System.out.println("\nTime spent in windows:");
 		daemon.getTimeSpent().entrySet().forEach(entry -> {
-			System.out.printf("(%d sec) %s%n", entry.getValue(), entry.getKey());
+			builder.append(String.format("(%d sec) %s", entry.getValue(), entry.getKey()));
+			builder.append("\n");
 		});
-		return true;
+		return builder.toString();
 	}
 	
-	private boolean openFrame() {
-		new TrackerFrame(daemon);
-		return true;
+	@ShellMethod(value = "open GUI application")
+	private void openFrame() {
+		context.getBeanFactory().getBean(TrackerFrame.class);
 	}
-	
-	private boolean quit() {
-		return false;
-	}
-	
-	private record CliCommand(
-			String description,
-			Supplier<Boolean> command
-			) { }
 
 }

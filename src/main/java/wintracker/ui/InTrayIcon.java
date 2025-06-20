@@ -3,9 +3,26 @@ package wintracker.ui;
 import java.awt.*;
 import java.awt.event.*;
 
-public class InTrayIcon {
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.stereotype.Component;
 
-	public InTrayIcon(Runnable onClick) {
+import lombok.Setter;
+import wintracker.service.TrackerDaemon;
+
+@Component
+public class InTrayIcon {
+	@Autowired
+	@Setter
+	private ConfigurableApplicationContext context;
+	@Autowired
+	@Setter
+	private TrackerDaemon daemon;
+	
+	private Runnable onClick = () -> context.getBeanFactory().getBean(TrackerFrame.class);
+
+	public InTrayIcon() {
 		TrayIcon trayIcon = null;
 		if (SystemTray.isSupported()) {
 			SystemTray tray = SystemTray.getSystemTray();
@@ -14,7 +31,9 @@ public class InTrayIcon {
 		    MenuItem openItem = new MenuItem("Open window");
 		    openItem.addActionListener(getListener(onClick));
 		    MenuItem quitItem = new MenuItem("Quit");
-		    quitItem.addActionListener(getListener(() -> System.exit(0)));
+		    quitItem.addActionListener(getListener(() -> {
+		    	SpringApplication.exit(context, () -> 0);
+		    	}));
 		    popup.add(openItem);
 		    popup.add(quitItem);
 		    trayIcon = new TrayIcon(image, "Win Tracker", popup);

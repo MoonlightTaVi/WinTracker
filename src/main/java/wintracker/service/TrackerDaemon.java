@@ -2,71 +2,83 @@ package wintracker.service;
 
 import java.time.LocalDate;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import lombok.Setter;
+import wintracker.model.WindowEntry;
+
+@Service
 public class TrackerDaemon implements Runnable {
-	private final Thread thread;
+	@Autowired
+	@Setter
+	private PersistenceService service;
+	private volatile boolean running = true;
+	
 	private WindowListener listener = new WindowListener(
 			"Параметры", "Интерфейс ввода Windows", "Program Manager"
 			);
 	private Set<String> openedWindows = new HashSet<>();
-	private Map<String, Integer> timeSpent = new ConcurrentHashMap<>();
-	private Map<String, LocalDate> lastDates = new ConcurrentHashMap<>();
-	
-	public TrackerDaemon() {
-		thread = new Thread(this, this.getClass().getName());
-		thread.start();
-	}
 	
 	public Map<String, Integer> getTimeSpent() {
-		return Map.copyOf(timeSpent);
+		Map<String, Integer> timeSpent = new HashMap<>();
+		for (WindowEntry entry : service.getAll()) {
+			timeSpent.put(entry.getTitle(), entry.getSecondsOpened());
+		}
+		return timeSpent;
 	}
 	
 	public LocalDate getLastDate(String forWindowsTile) {
-		return lastDates.get(forWindowsTile);
-	}
-	
-	public String stop() {
-		String[] args = new String[2];
-		args[0] = thread.getName();
-		try {
-			thread.interrupt();
-			args[1] = "Success";
-		} catch (SecurityException e) {
-			args[1] = "Failed (SecurityException): " + e.getLocalizedMessage();
-		} catch (Exception e) {
-			args[1] = "Failed (unknown Exception): " + e.getLocalizedMessage();
+		WindowEntry entry = service.getAll().stream()
+				.filter(e -> e.getTitle().equals(forWindowsTile))
+				.findFirst()
+				.get();
+		LocalDate lastDate = null;
+		if (entry != null) {
+			lastDate = entry.getLastDate();
 		}
-		return String.format("%s interruption status: %s", args[0], args[1]);
+		return lastDate;
 	}
 
 	@Override
 	public void run() {
-		try {
-			int seconds = 0;
-			while (true) {
+		int seconds = 0;
+		while (running) {
+			try {
 				Set<String> currentlyOpened =  listener.getWindows();
+				// Update already opened windows
 				for (String title : currentlyOpened) {
 					if (openedWindows.contains(title)) {
-						int openedFor = timeSpent.getOrDefault(title, 0);
-						openedFor += seconds;
-						timeSpent.put(title, openedFor);
-						lastDates.put(title, LocalDate.now());
+						WindowEntry entry = service.findByTitle(title);
+						int openedFor = seconds;
+						if (entry != null) {
+							openedFor += entry.getSecondsOpened();
+						} else {
+							entry = new WindowEntry();
+							entry.setTitle(title);
+						}
+						entry.setLastDate(LocalDate.now());
+						entry.setSecondsOpened(openedFor);
+						service.put(entry);
 					} else {
 						openedWindows.add(title);
 					}
 				}
+				// Start observing newly opened windows
 				for (String title : List.of(openedWindows.toArray(String[]::new))) {
 					if (!currentlyOpened.contains(title)) {
 						openedWindows.remove(title);
 					}
 				}
-				
+				// Lazily wait for 10-30 seconds until next update
 				seconds = (int) (Math.random() * 20) + 10;
 				Thread.sleep((long) seconds * 1000);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				System.err.println("Daemon was interrupted.");
+				running = false;
 			}
-		} catch (InterruptedException e) {
-			System.err.println("Daemon was interrupted.");
 		}
 	}
 

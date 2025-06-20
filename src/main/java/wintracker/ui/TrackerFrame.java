@@ -6,11 +6,24 @@ import java.util.List;
 
 import javax.swing.*;
 
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.*;
+import org.springframework.stereotype.Component;
+
+import lombok.Setter;
 import wintracker.service.TrackerDaemon;
 
-public class TrackerFrame {
+@Component
+@Scope("prototype")
+@Lazy
+public class TrackerFrame implements InitializingBean {
+	@Autowired
+	@Setter
+	private TrackerDaemon daemon;
 	
-	public TrackerFrame(final TrackerDaemon daemon) {
+	@Override
+	public void afterPropertiesSet() {
 		Map<String, Integer> seconds = daemon.getTimeSpent();
 		// Latest first
 		List<String> titles = new ArrayList<>(seconds.keySet())
