@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 import lombok.Setter;
 
 @Component
-public class ShutdownHandler implements InitializingBean, ApplicationListener<ContextClosedEvent> {
+public class LifecycleHandler implements InitializingBean, ApplicationListener<ContextClosedEvent> {
 	@Autowired
 	@Setter
 	private ThreadPoolTaskExecutor executor;
@@ -29,7 +29,7 @@ public class ShutdownHandler implements InitializingBean, ApplicationListener<Co
 
 	@Override
 	public void onApplicationEvent(ContextClosedEvent event) {
-		System.err.println("Shutting down...");
+		System.err.println("\nShutting down...");
 		executor.shutdown();
 		System.err.println("Finished.");
 		System.exit(0);

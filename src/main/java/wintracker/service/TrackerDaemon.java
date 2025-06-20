@@ -2,6 +2,7 @@ package wintracker.service;
 
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ public class TrackerDaemon implements Runnable {
 			"Параметры", "Интерфейс ввода Windows", "Program Manager"
 			);
 	private Set<String> openedWindows = new HashSet<>();
+	private volatile Map<String, Integer> currentSession = new ConcurrentHashMap<>();
 	
 	public Map<String, Integer> getTimeSpent() {
 		Map<String, Integer> timeSpent = new HashMap<>();
@@ -39,6 +41,10 @@ public class TrackerDaemon implements Runnable {
 			lastDate = entry.getLastDate();
 		}
 		return lastDate;
+	}
+	
+	public Integer getSession(String forWindowsTile) {
+		return currentSession.getOrDefault(forWindowsTile, 0);
 	}
 
 	@Override
@@ -60,6 +66,12 @@ public class TrackerDaemon implements Runnable {
 						}
 						entry.setLastDate(LocalDate.now());
 						entry.setSecondsOpened(openedFor);
+						
+						int session = currentSession.getOrDefault(title, 0);
+						session += seconds;
+						currentSession.put(title, session);
+						entry.setCurrentSessionSeconds(session);
+						
 						service.put(entry);
 					} else {
 						openedWindows.add(title);
@@ -69,6 +81,7 @@ public class TrackerDaemon implements Runnable {
 				for (String title : List.of(openedWindows.toArray(String[]::new))) {
 					if (!currentlyOpened.contains(title)) {
 						openedWindows.remove(title);
+						currentSession.remove(title);
 					}
 				}
 				// Lazily wait for 10-30 seconds until next update

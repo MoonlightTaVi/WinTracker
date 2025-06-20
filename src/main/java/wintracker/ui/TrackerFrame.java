@@ -29,9 +29,20 @@ public class TrackerFrame implements InitializingBean {
 		List<String> titles = new ArrayList<>(seconds.keySet())
 				.stream()
 				.sorted(
-						(a, b) -> daemon.getLastDate(b).compareTo(
-								daemon.getLastDate(a)
-								)
+						(a, b) -> {
+							int result = daemon.getLastDate(b).compareTo(
+									daemon.getLastDate(a)
+									);
+							if (result == 0) {
+								result = daemon.getSession(b)
+										.compareTo(daemon.getSession(a));
+							}
+							if (result == 0) {
+								result = seconds.getOrDefault(b, 0)
+										.compareTo(seconds.getOrDefault(a, 0));
+							}
+							return result;
+						}
 						)
 				.limit(20)
 				.toList();
@@ -40,8 +51,9 @@ public class TrackerFrame implements InitializingBean {
 		panel.setLayout(new GridLayout(0, 1));
 		for (String title : titles) {
 			// Entry row (title, time spent, last date)
-			JPanel row = new JPanel(new GridLayout(1, 3));
+			JPanel row = new JPanel(new GridLayout(1, 4));
 			row.add(getLabel(title));
+			row.add(getLabel(parseTime(daemon.getSession(title))));
 			row.add(getLabel(parseTime(seconds.get(title))));
 			row.add(getLabel(daemon.getLastDate(title).toString()));
 			row.setVisible(true);
@@ -71,7 +83,10 @@ public class TrackerFrame implements InitializingBean {
 		return label;
 	}
 	
-	public String parseTime(int seconds) {
+	public String parseTime(Integer seconds) {
+		if (seconds == null) {
+			return "...";
+		}
 		String result = null;
 		if (seconds < 60) {
 			result = String.format("%ds", seconds);

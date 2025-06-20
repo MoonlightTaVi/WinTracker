@@ -20,6 +20,9 @@ public class WindowEntry {
 	private Integer secondsOpened;
 	@Setter
 	@Getter
+	private Integer currentSessionSeconds;
+	@Setter
+	@Getter
 	private LocalDate lastDate;
 	@Setter
 	@Getter
