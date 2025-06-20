@@ -18,6 +18,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
+import wintracker.service.TrackerDaemon;
+
 @SpringBootApplication
 public class WinTrackerApp {
 	private static Logger log = LoggerFactory.getLogger(WinTrackerApp.class);
@@ -39,7 +41,16 @@ public class WinTrackerApp {
         application.setHeadless(false); // Disable headless mode
         application.setWebApplicationType(WebApplicationType.NONE);
         ConfigurableApplicationContext context = application.run(args);
-		context.close();
+        TrackerDaemon daemon = context.getBean(TrackerDaemon.class);
+        try {
+			while (daemon.isRunning()) {
+				Thread.sleep(1000);
+			}
+		} catch (InterruptedException e) {
+			log.error("Application interrupted with failue");
+		} finally {
+			context.close();
+		}
 	}
 	
 	/**

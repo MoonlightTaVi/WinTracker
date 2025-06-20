@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import lombok.Getter;
 import lombok.Setter;
 import wintracker.model.WindowEntry;
 
@@ -15,6 +16,7 @@ public class TrackerDaemon implements Runnable {
 	@Autowired
 	@Setter
 	private PersistenceService service;
+	@Getter
 	private volatile boolean running = true;
 	
 	private WindowListener listener = new WindowListener(
