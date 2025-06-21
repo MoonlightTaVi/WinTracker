@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.github.tavi</groupId>
   <artifactId>win-tracker</artifactId>
-  <version>0.1.0-ALPHA</version>
+  <version>0.1.1-ALPHA</version>
   <name>Windows Tracker</name>
   <description>App to track time spent using programs</description>
   <build>

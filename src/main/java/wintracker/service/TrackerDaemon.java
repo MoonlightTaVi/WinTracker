@@ -14,7 +14,7 @@ import wintracker.model.WindowEntry;
 @Service
 public class TrackerDaemon implements Runnable {
 	/** Reset currentSession to 0 seconds after 20 minutes. */
-	private final int CLEANUP_TIME = 60;
+	private final int CLEANUP_TIME = 1200;
 	@Getter
 	private final LocalDateTime startedAt;
 	@Autowired
