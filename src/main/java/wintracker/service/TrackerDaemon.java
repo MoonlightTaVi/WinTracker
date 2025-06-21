@@ -1,6 +1,6 @@
 package wintracker.service;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -13,6 +13,10 @@ import wintracker.model.WindowEntry;
 
 @Service
 public class TrackerDaemon implements Runnable {
+	/** Reset currentSession to 0 seconds after 20 minutes. */
+	private final int CLEANUP_TIME = 60;
+	@Getter
+	private final LocalDateTime startedAt;
 	@Autowired
 	@Setter
 	private PersistenceService service;
@@ -22,8 +26,25 @@ public class TrackerDaemon implements Runnable {
 	private WindowListener listener = new WindowListener(
 			"Параметры", "Интерфейс ввода Windows", "Program Manager"
 			);
-	private Set<String> openedWindows = new HashSet<>();
+	/** Set of currently tracked windows */
+	private Set<String> trackedWindows = new HashSet<>();
+	/** 
+	 * Time for which the windows were open since program start. 
+	 * The value resets when some time passes after closing the window.
+	 */
 	private volatile Map<String, Integer> currentSession = new ConcurrentHashMap<>();
+	/** 
+	 * If a windows is closed during the Application run,
+	 * its currentSession is queued to be reset
+	 * after some time.
+	 * @see #currentSession
+	 */
+	private volatile Map<String, Integer> currentSessionCleanupQueue = new ConcurrentHashMap<>();
+	
+	public TrackerDaemon() {
+		startedAt = LocalDateTime.now();
+	}
+	
 	
 	public Map<String, Integer> getTimeSpent() {
 		Map<String, Integer> timeSpent = new HashMap<>();
@@ -33,12 +54,12 @@ public class TrackerDaemon implements Runnable {
 		return timeSpent;
 	}
 	
-	public LocalDate getLastDate(String forWindowsTile) {
+	public LocalDateTime getLastDate(String forWindowsTile) {
 		WindowEntry entry = service.getAll().stream()
 				.filter(e -> e.getTitle().equals(forWindowsTile))
 				.findFirst()
 				.get();
-		LocalDate lastDate = null;
+		LocalDateTime lastDate = null;
 		if (entry != null) {
 			lastDate = entry.getLastDate();
 		}
@@ -54,10 +75,13 @@ public class TrackerDaemon implements Runnable {
 		int seconds = 0;
 		while (running) {
 			try {
-				Set<String> currentlyOpened =  listener.getWindows();
+				Set<String> currentlyOpen =  listener.getWindows();
 				// Update already opened windows
-				for (String title : currentlyOpened) {
-					if (openedWindows.contains(title)) {
+				for (String title : currentlyOpen) {
+					// Do not clean open windows
+					currentSessionCleanupQueue.remove(title);
+					// Update time for tracked windows
+					if (trackedWindows.contains(title)) {
 						WindowEntry entry = service.findByTitle(title);
 						int openedFor = seconds;
 						if (entry != null) {
@@ -66,24 +90,35 @@ public class TrackerDaemon implements Runnable {
 							entry = new WindowEntry();
 							entry.setTitle(title);
 						}
-						entry.setLastDate(LocalDate.now());
+						entry.setLastDate(LocalDateTime.now());
 						entry.setSecondsOpened(openedFor);
 						
 						int session = currentSession.getOrDefault(title, 0);
 						session += seconds;
 						currentSession.put(title, session);
-						entry.setCurrentSessionSeconds(session);
 						
 						service.put(entry);
-					} else {
-						openedWindows.add(title);
+					}
+					// Start tracking untracked windows
+					else {
+						trackedWindows.add(title);
 					}
 				}
-				// Start observing newly opened windows
-				for (String title : List.of(openedWindows.toArray(String[]::new))) {
-					if (!currentlyOpened.contains(title)) {
-						openedWindows.remove(title);
-						currentSession.remove(title);
+				// Stop tracking closed windows
+				for (String title : List.of(trackedWindows.toArray(String[]::new))) {
+					if (!currentlyOpen.contains(title)) {
+						trackedWindows.remove(title);
+					}
+				}
+				// Reset current session when time passes
+				for (String title : List.of(currentSession.keySet().toArray(String[]::new))) {
+					if (!currentlyOpen.contains(title)) {
+						int cleanupTimer = currentSessionCleanupQueue.getOrDefault(title, 0);
+						cleanupTimer += seconds;
+						currentSessionCleanupQueue.put(title, cleanupTimer);
+						if (cleanupTimer >= CLEANUP_TIME) {
+							currentSession.remove(title);
+						}
 					}
 				}
 				// Lazily wait for 10-30 seconds until next update

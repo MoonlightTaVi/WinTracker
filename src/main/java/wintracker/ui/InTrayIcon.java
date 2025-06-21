@@ -3,6 +3,7 @@ package wintracker.ui;
 import java.awt.*;
 import java.awt.event.*;
 
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -12,7 +13,7 @@ import lombok.Setter;
 import wintracker.service.TrackerDaemon;
 
 @Component
-public class InTrayIcon {
+public class InTrayIcon implements InitializingBean {
 	@Autowired
 	@Setter
 	private ConfigurableApplicationContext context;
@@ -20,6 +21,7 @@ public class InTrayIcon {
 	@Setter
 	private TrackerDaemon daemon;
 	
+	/** "Open" option in tray. */
 	private Runnable onClick = () -> context.getBeanFactory().getBean(TrackerFrame.class);
 
 	public InTrayIcon() {
@@ -54,6 +56,12 @@ public class InTrayIcon {
 	        	actionPerformed.run();
 	        }
 	    };
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		// Open Application frame on start-up
+		onClick.run();
 	}
 	
 }

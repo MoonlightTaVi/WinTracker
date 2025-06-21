@@ -1,6 +1,6 @@
 package wintracker.model;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -20,10 +20,7 @@ public class WindowEntry {
 	private Integer secondsOpened;
 	@Setter
 	@Getter
-	private Integer currentSessionSeconds;
-	@Setter
-	@Getter
-	private LocalDate lastDate;
+	private LocalDateTime lastDate;
 	@Setter
 	@Getter
 	private String meta;

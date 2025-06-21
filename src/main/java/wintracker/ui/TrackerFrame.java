@@ -1,6 +1,7 @@
 package wintracker.ui;
 
 import java.awt.*;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
 
@@ -16,11 +17,12 @@ import wintracker.service.TrackerDaemon;
 
 @Component
 @Scope("prototype")
-@Lazy
 public class TrackerFrame implements InitializingBean {
 	@Autowired
 	@Setter
 	private TrackerDaemon daemon;
+	
+	private DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("uuuu/MM/dd HH:mm");
 	
 	@Override
 	public void afterPropertiesSet() {
@@ -29,20 +31,8 @@ public class TrackerFrame implements InitializingBean {
 		List<String> titles = new ArrayList<>(seconds.keySet())
 				.stream()
 				.sorted(
-						(a, b) -> {
-							int result = daemon.getLastDate(b).compareTo(
-									daemon.getLastDate(a)
-									);
-							if (result == 0) {
-								result = daemon.getSession(b)
-										.compareTo(daemon.getSession(a));
-							}
-							if (result == 0) {
-								result = seconds.getOrDefault(b, 0)
-										.compareTo(seconds.getOrDefault(a, 0));
-							}
-							return result;
-						}
+						(a, b) -> daemon.getLastDate(b).compareTo(
+								daemon.getLastDate(a))
 						)
 				.limit(20)
 				.toList();
@@ -55,14 +45,14 @@ public class TrackerFrame implements InitializingBean {
 			row.add(getLabel(title));
 			row.add(getLabel(parseTime(daemon.getSession(title))));
 			row.add(getLabel(parseTime(seconds.get(title))));
-			row.add(getLabel(daemon.getLastDate(title).toString()));
+			row.add(getLabel(dateFormat.format(daemon.getLastDate(title))));
 			row.setVisible(true);
 			panel.add(row);
 		}
 		panel.setVisible(true);
 		
 		JFrame frame = new JFrame();
-		frame.setTitle("Windows Time Tracker ⏱️");
+		frame.setTitle("Windows Time Tracker ⏱️ | Started at: " + dateFormat.format(daemon.getStartedAt()));
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		frame.getContentPane().add(panel);
 		frame.pack();

@@ -1,6 +1,6 @@
 package wintracker.service;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +27,7 @@ public class PersistenceService {
 		repository.save(entry);
 	}
 
-	public void put(long id, int seconds, LocalDate lastDate) {
+	public void put(long id, int seconds, LocalDateTime lastDate) {
 		Optional<WindowEntry> entryOpt = repository.findById(id);
 		entryOpt.ifPresentOrElse(entry -> {
 			entry.setSecondsOpened(seconds);
@@ -41,7 +41,7 @@ public class PersistenceService {
 		});
 	}
 
-	public void put(String title, int seconds, LocalDate lastDate) {
+	public void put(String title, int seconds, LocalDateTime lastDate) {
 		repository.findAll()
 		.stream()
 		.filter(entry -> entry.getTitle().equals(title))
