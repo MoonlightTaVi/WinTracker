@@ -52,6 +52,18 @@ public class TrackerDaemon implements Runnable {
 		return timeSpent;
 	}
 	
+	public LocalDateTime getCreatedDate(String forWindowsTile) {
+		WindowEntry entry = service.getAll().stream()
+				.filter(e -> e.getTitle().equals(forWindowsTile))
+				.findFirst()
+				.get();
+		LocalDateTime createdDate = null;
+		if (entry != null) {
+			createdDate = entry.getCreatedDate();
+		}
+		return createdDate;
+	}
+	
 	public LocalDateTime getLastDate(String forWindowsTile) {
 		WindowEntry entry = service.getAll().stream()
 				.filter(e -> e.getTitle().equals(forWindowsTile))

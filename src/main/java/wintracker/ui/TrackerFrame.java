@@ -45,6 +45,7 @@ public class TrackerFrame implements InitializingBean {
 			row.add(getLabel(title));
 			row.add(getLabel(parseTime(daemon.getSession(title))));
 			row.add(getLabel(parseTime(seconds.get(title))));
+			row.add(getLabel(dateFormat.format(daemon.getCreatedDate(title))));
 			row.add(getLabel(dateFormat.format(daemon.getLastDate(title))));
 			row.setVisible(true);
 			panel.add(row);
