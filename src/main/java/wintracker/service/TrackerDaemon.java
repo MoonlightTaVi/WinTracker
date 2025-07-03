@@ -23,9 +23,7 @@ public class TrackerDaemon implements Runnable {
 	@Getter
 	private volatile boolean running = true;
 	
-	private WindowListener listener = new WindowListener(
-			"Параметры", "Интерфейс ввода Windows", "Program Manager"
-			);
+	private WindowListener listener = new WindowListener();
 	/** Set of currently tracked windows */
 	private Set<String> trackedWindows = new HashSet<>();
 	/** 
@@ -82,22 +80,16 @@ public class TrackerDaemon implements Runnable {
 					currentSessionCleanupQueue.remove(title);
 					// Update time for tracked windows
 					if (trackedWindows.contains(title)) {
-						WindowEntry entry = service.findByTitle(title);
+						WindowEntry entry = service.findByTitle(title).orElseGet(() -> new WindowEntry(title));
 						int openedFor = seconds;
-						if (entry != null) {
-							openedFor += entry.getSecondsOpened();
-						} else {
-							entry = new WindowEntry();
-							entry.setTitle(title);
-						}
-						entry.setLastDate(LocalDateTime.now());
+						openedFor += entry.getSecondsOpened();
 						entry.setSecondsOpened(openedFor);
+						service.save(entry);
 						
 						int session = currentSession.getOrDefault(title, 0);
 						session += seconds;
 						currentSession.put(title, session);
 						
-						service.put(entry);
 					}
 					// Start tracking untracked windows
 					else {
@@ -108,6 +100,9 @@ public class TrackerDaemon implements Runnable {
 				for (String title : List.of(trackedWindows.toArray(String[]::new))) {
 					if (!currentlyOpen.contains(title)) {
 						trackedWindows.remove(title);
+						WindowEntry entry = service.findByTitle(title).orElseGet(() -> new WindowEntry(title));
+						entry.setLastDate(LocalDateTime.now());
+						service.save(entry);
 					}
 				}
 				// Reset current session when time passes
