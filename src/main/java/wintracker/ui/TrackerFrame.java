@@ -6,6 +6,8 @@ import java.util.*;
 import java.util.List;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,28 +19,36 @@ import wintracker.service.TrackerDaemon;
 
 @Component
 @Scope("prototype")
-public class TrackerFrame implements InitializingBean {
+public class TrackerFrame implements InitializingBean, DocumentListener {
 	@Autowired
 	@Setter
 	private TrackerDaemon daemon;
-	
 	private DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("uuuu/MM/dd HH:mm");
+	private JPanel contentPanel = new JPanel();
+	private JTextField filterField = new JTextField();
 	
-	@Override
-	public void afterPropertiesSet() {
+	public void fetchData() {
+		fetchData(null);
+	}
+	public void fetchData(final String titleContains) {
+		contentPanel.removeAll();
+		
 		Map<String, Integer> seconds = daemon.getTimeSpent();
 		// Latest first
 		List<String> titles = new ArrayList<>(seconds.keySet())
 				.stream()
+				.filter(t -> {
+					return titleContains == null ||
+							titleContains.isBlank() ||
+							titleContains.length() < 4 ||
+							t.toLowerCase().contains(titleContains.toLowerCase());
+				})
 				.sorted(
 						(a, b) -> daemon.getLastDate(b).compareTo(
 								daemon.getLastDate(a))
 						)
 				.limit(20)
 				.toList();
-		// Content panel with a single column
-		JPanel panel = new JPanel();
-		panel.setLayout(new GridLayout(0, 1));
 		for (String title : titles) {
 			// Entry row (title, time spent, last date)
 			JPanel row = new JPanel(new GridLayout(1, 4));
@@ -48,16 +58,42 @@ public class TrackerFrame implements InitializingBean {
 			row.add(getLabel(dateFormat.format(daemon.getCreatedDate(title))));
 			row.add(getLabel(dateFormat.format(daemon.getLastDate(title))));
 			row.setVisible(true);
-			panel.add(row);
+			row.setMaximumSize(new Dimension(800, 20));
+			contentPanel.add(row);
 		}
-		panel.setVisible(true);
+		contentPanel.add(Box.createGlue());
+		contentPanel.revalidate();
+		contentPanel.repaint();
+	}
+	
+	@Override
+	public void afterPropertiesSet() {
+		// Filter entries by title bar
+		JPanel filterPanel = new JPanel(new FlowLayout());
+		filterPanel.add(new JLabel("Filter by title:"));
+		filterField.getDocument().addDocumentListener(this);
+		filterField.setToolTipText("Filter entries by title.");
+		filterField.setPreferredSize(new Dimension(300, 20));
+		filterPanel.add(filterField);
 		
+		// Content panel with a single column
+		contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+		contentPanel.setPreferredSize(new Dimension(800, 400));
+		fetchData();
+		contentPanel.setVisible(true);
+		
+		// Group two panels in one
+		JPanel mainPanel = new JPanel();
+		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+		mainPanel.add(filterPanel);
+		mainPanel.add(contentPanel);
+		
+		// Application window frame
 		JFrame frame = new JFrame();
 		frame.setTitle("Windows Time Tracker ⏱️");
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		frame.getContentPane().add(panel);
-		frame.pack();
-		frame.setMinimumSize(new Dimension(100, 100));
+		frame.getContentPane().add(mainPanel);
+		frame.setMinimumSize(new Dimension(800, 420));
 		frame.setVisible(true);
 	}
 	
@@ -74,7 +110,20 @@ public class TrackerFrame implements InitializingBean {
 		return label;
 	}
 	
-	public String parseTime(Integer seconds) {
+	@Override
+	public void insertUpdate(DocumentEvent e) {
+		fetchData(filterField.getText());
+	}
+	@Override
+	public void removeUpdate(DocumentEvent e) {
+		fetchData(filterField.getText());
+	}
+	@Override
+	public void changedUpdate(DocumentEvent e) {
+		fetchData(filterField.getText());
+	}
+	
+	private String parseTime(Integer seconds) {
 		if (seconds == null) {
 			return "...";
 		}
