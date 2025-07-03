@@ -52,7 +52,7 @@ public class TrackerFrame implements InitializingBean {
 		panel.setVisible(true);
 		
 		JFrame frame = new JFrame();
-		frame.setTitle("Windows Time Tracker ⏱️ | Started at: " + dateFormat.format(daemon.getStartedAt()));
+		frame.setTitle("Windows Time Tracker ⏱️");
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		frame.getContentPane().add(panel);
 		frame.pack();
