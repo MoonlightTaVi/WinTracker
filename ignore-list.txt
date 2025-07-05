@@ -1,4 +1,4 @@
-Параметры
 Интерфейс ввода Windows
 Program Manager
 PopupHost
+Параметры

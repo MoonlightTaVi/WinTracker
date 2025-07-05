@@ -6,20 +6,23 @@ import java.util.*;
 import java.util.List;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.*;
 import org.springframework.stereotype.Component;
 
 import lombok.Setter;
+import wintracker.service.IgnoreList;
 import wintracker.service.TrackerDaemon;
+import wintracker.util.Listeners;
 
 @Component
 @Scope("prototype")
-public class TrackerFrame implements InitializingBean, DocumentListener {
+public class TrackerFrame implements InitializingBean {
+	@Autowired
+	private ConfigurableApplicationContext context;
 	@Autowired
 	@Setter
 	private TrackerDaemon daemon;
@@ -69,12 +72,24 @@ public class TrackerFrame implements InitializingBean, DocumentListener {
 	@Override
 	public void afterPropertiesSet() {
 		// Filter entries by title bar
-		JPanel filterPanel = new JPanel(new FlowLayout());
-		filterPanel.add(new JLabel("Filter by title:"));
-		filterField.getDocument().addDocumentListener(this);
+		JPanel headerPanel = new JPanel(new FlowLayout());
+		headerPanel.add(new JLabel("Filter by title:"));
+		filterField.getDocument().addDocumentListener(
+				Listeners.getDocumentListener(
+						() -> fetchData(filterField.getText())
+						));
 		filterField.setToolTipText("Filter entries by title.");
 		filterField.setPreferredSize(new Dimension(300, 20));
-		filterPanel.add(filterField);
+		headerPanel.add(filterField);
+		JButton btnShowIgnoreList = new JButton("Ignore list");
+		btnShowIgnoreList.addActionListener(
+				Listeners.getActionListener(
+						() -> new IgnoreListFrame(
+								context.getBean(IgnoreList.class)
+								)
+						)
+				);
+		headerPanel.add(btnShowIgnoreList);
 		
 		// Content panel with a single column
 		contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
@@ -85,7 +100,7 @@ public class TrackerFrame implements InitializingBean, DocumentListener {
 		// Group two panels in one
 		JPanel mainPanel = new JPanel();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-		mainPanel.add(filterPanel);
+		mainPanel.add(headerPanel);
 		mainPanel.add(contentPanel);
 		
 		// Application window frame
@@ -108,19 +123,6 @@ public class TrackerFrame implements InitializingBean, DocumentListener {
 		label.setHorizontalAlignment(SwingConstants.CENTER);
 		label.setAlignmentX(JLabel.CENTER_ALIGNMENT);
 		return label;
-	}
-	
-	@Override
-	public void insertUpdate(DocumentEvent e) {
-		fetchData(filterField.getText());
-	}
-	@Override
-	public void removeUpdate(DocumentEvent e) {
-		fetchData(filterField.getText());
-	}
-	@Override
-	public void changedUpdate(DocumentEvent e) {
-		fetchData(filterField.getText());
 	}
 	
 	private String parseTime(Integer seconds) {
