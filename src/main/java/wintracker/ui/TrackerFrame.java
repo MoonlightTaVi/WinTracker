@@ -57,12 +57,34 @@ public class TrackerFrame implements InitializingBean {
 		for (String title : titles) {
 			// Entry row (title, time spent, last date)
 			JPanel row = new JPanel(new GridLayout(1, 4));
-			JLabel titleLabel = getLabel(title);
+			JLabel titleLabel = getLabel(
+					title, String.format(
+							"(Right click for options) %s", title
+							)
+					);
 			row.add(titleLabel);
-			row.add(getLabel(parseTime(daemon.getSession(title))));
-			row.add(getLabel(parseTime(seconds.get(title))));
-			row.add(getLabel(dateFormat.format(daemon.getCreatedDate(title))));
-			row.add(getLabel(dateFormat.format(daemon.getLastDate(title))));
+			row.add(
+					getLabel(
+							parseTime(daemon.getSession(title)),
+							"Time since this session has started"
+							)
+					);
+			row.add(
+					getLabel(
+							parseTime(seconds.get(title)),
+							"Overall time"
+							)
+					);
+			row.add(getLabel(
+					dateFormat.format(daemon.getCreatedDate(title)),
+					"First time opened date"
+					)
+					);
+			row.add(getLabel(
+					dateFormat.format(daemon.getLastDate(title)),
+					"Last time closed date"
+					)
+					);
 			row.setVisible(true);
 			row.setMaximumSize(new Dimension(800, 20));
 			titleLabel.addMouseListener(
@@ -121,9 +143,9 @@ public class TrackerFrame implements InitializingBean {
 		frame.setVisible(true);
 	}
 	
-	private JLabel getLabel(String text) {
+	private JLabel getLabel(String text, String tooltip) {
 		JLabel label = new JLabel();
-		label.setToolTipText(text);
+		label.setToolTipText(tooltip);
 		// Limit maximum length of label to 30 characters
 		if (text.length() > 30) {
 			text = text.substring(0, 25) + "...";
@@ -142,7 +164,7 @@ public class TrackerFrame implements InitializingBean {
 		options.put("Copy title", () -> clipboard.setContents(stringSelection, null));
 		options.put("Completely delete", () -> {
 			daemon.deleteTitle(title);
-			forTitleLabel.setText("<queued for removal, wait ~30sec>");
+			forTitleLabel.setText("<deletion is queued>");
 			});
 		options.put("Undo deletion", () -> {
 			daemon.unqueDeletionOfTitle(title);

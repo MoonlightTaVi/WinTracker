@@ -1,4 +1,5 @@
 Интерфейс ввода Windows
 Program Manager
 PopupHost
+Мини-приложения
 Параметры
