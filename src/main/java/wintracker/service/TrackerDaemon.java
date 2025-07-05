@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import wintracker.infrastructure.WindowListener;
@@ -14,35 +15,37 @@ import wintracker.model.WindowEntry;
 
 @Service
 public class TrackerDaemon implements Runnable {
-	/** Reset currentSession to 0 seconds after 20 minutes. */
-	private final int CLEANUP_TIME = 1200;
 	@Getter
 	private final LocalDateTime startedAt;
 	@Autowired
 	@Setter
 	private PersistenceService service;
+	@Autowired
+	@Setter
+	private IgnoreList ignoreList;
 	@Getter
 	private volatile boolean running = true;
 	
-	private WindowListener listener = new WindowListener();
+	private WindowListener listener;
 	/** Set of currently tracked windows */
 	private Set<String> trackedWindows = new HashSet<>();
 	/** 
 	 * Time for which the windows were open since program start. 
-	 * The value resets when some time passes after closing the window.
+	 * The value resets after program restart.
 	 */
 	private volatile Map<String, Integer> currentSession = new ConcurrentHashMap<>();
-	/** 
-	 * If a windows is closed during the Application run,
-	 * its currentSession is queued to be reset
-	 * after some time.
-	 * @see #currentSession
+	/**
+	 * Titles inside this set will be removed on the next daemon iteration.
 	 */
-	private volatile Map<String, Integer> currentSessionCleanupQueue = new ConcurrentHashMap<>();
 	private volatile Set<String> removalQueue = ConcurrentHashMap.newKeySet();
 	
 	public TrackerDaemon() {
 		startedAt = LocalDateTime.now();
+	}
+	
+	@PostConstruct
+	public void init() {
+		 listener = new WindowListener(ignoreList);
 	}
 	
 	
@@ -92,7 +95,6 @@ public class TrackerDaemon implements Runnable {
 		trackedWindows.removeAll(removalQueue);
 		for (String title : removalQueue) {
 			currentSession.remove(title);
-			currentSessionCleanupQueue.remove(title);
 		}
 		service.deleteByNames(removalQueue);
 		removalQueue.clear();
@@ -107,8 +109,6 @@ public class TrackerDaemon implements Runnable {
 				Set<String> currentlyOpen =  listener.getWindows();
 				// Update already opened windows
 				for (String title : currentlyOpen) {
-					// Do not clean open windows
-					currentSessionCleanupQueue.remove(title);
 					// Update time for tracked windows
 					if (trackedWindows.contains(title)) {
 						WindowEntry entry = service.findByTitle(title).orElseGet(() -> new WindowEntry(title));
@@ -134,17 +134,6 @@ public class TrackerDaemon implements Runnable {
 						WindowEntry entry = service.findByTitle(title).orElseGet(() -> new WindowEntry(title));
 						entry.setLastDate(LocalDateTime.now());
 						service.save(entry);
-					}
-				}
-				// Reset current session when time passes
-				for (String title : List.of(currentSession.keySet().toArray(String[]::new))) {
-					if (!currentlyOpen.contains(title)) {
-						int cleanupTimer = currentSessionCleanupQueue.getOrDefault(title, 0);
-						cleanupTimer += seconds;
-						currentSessionCleanupQueue.put(title, cleanupTimer);
-						if (cleanupTimer >= CLEANUP_TIME) {
-							currentSession.remove(title);
-						}
 					}
 				}
 				// Lazily wait for 10-30 seconds until next update
