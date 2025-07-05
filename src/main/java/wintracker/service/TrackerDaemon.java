@@ -39,6 +39,7 @@ public class TrackerDaemon implements Runnable {
 	 * @see #currentSession
 	 */
 	private volatile Map<String, Integer> currentSessionCleanupQueue = new ConcurrentHashMap<>();
+	private volatile Set<String> removalQueue = ConcurrentHashMap.newKeySet();
 	
 	public TrackerDaemon() {
 		startedAt = LocalDateTime.now();
@@ -80,11 +81,28 @@ public class TrackerDaemon implements Runnable {
 	public Integer getSession(String forWindowsTile) {
 		return currentSession.getOrDefault(forWindowsTile, 0);
 	}
+	
+	public void deleteTitle(String title) {
+		removalQueue.add(title);
+	}
+	public void unqueDeletionOfTitle(String title) {
+		removalQueue.remove(title);
+	}
+	private void launchRemoval() {
+		trackedWindows.removeAll(removalQueue);
+		for (String title : removalQueue) {
+			currentSession.remove(title);
+			currentSessionCleanupQueue.remove(title);
+		}
+		service.deleteByNames(removalQueue);
+		removalQueue.clear();
+	}
 
 	@Override
 	public void run() {
 		int seconds = 0;
 		while (running) {
+			launchRemoval();
 			try {
 				Set<String> currentlyOpen =  listener.getWindows();
 				// Update already opened windows

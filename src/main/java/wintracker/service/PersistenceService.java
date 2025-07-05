@@ -27,6 +27,14 @@ public class PersistenceService implements InitializingBean {
 		repository.save(entry);
 		entries.add(entry);
 	}
+	public void deleteByNames(Collection<String> titles) {
+		for (WindowEntry entry : entries.toArray(WindowEntry[]::new)) {
+			if (titles.contains(entry.getTitle())) {
+				entries.remove(entry);
+				repository.deleteById(entry.getId());
+			}
+		}
+	}
 	
 	public List<WindowEntry> getAll() {
 		return new ArrayList<>(entries);

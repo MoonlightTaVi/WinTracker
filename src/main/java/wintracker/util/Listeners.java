@@ -1,12 +1,10 @@
 package wintracker.util;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
+import java.awt.event.*;
+import java.util.Map;
 
-import javax.swing.JFrame;
+import javax.swing.*;
+import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -17,6 +15,23 @@ public class Listeners {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				actionToPerform.run();
+			}
+		};
+	}
+	
+	public static MouseListener getMouseListenerMenu(Map<String, Runnable> options) {
+		return new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (SwingUtilities.isRightMouseButton(e)) {
+					JPopupMenu popupMenu = new JPopupMenu();
+					for (Map.Entry<String, Runnable> option : options.entrySet()) {
+						JMenuItem item = new JMenuItem(option.getKey());
+						item.addActionListener(event -> option.getValue().run());
+						popupMenu.add(item);
+					}
+					popupMenu.show(e.getComponent(), 0, 0);
+				}
 			}
 		};
 	}

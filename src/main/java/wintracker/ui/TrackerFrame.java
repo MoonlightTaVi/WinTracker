@@ -1,6 +1,8 @@
 package wintracker.ui;
 
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
@@ -55,13 +57,20 @@ public class TrackerFrame implements InitializingBean {
 		for (String title : titles) {
 			// Entry row (title, time spent, last date)
 			JPanel row = new JPanel(new GridLayout(1, 4));
-			row.add(getLabel(title));
+			JLabel titleLabel = getLabel(title);
+			row.add(titleLabel);
 			row.add(getLabel(parseTime(daemon.getSession(title))));
 			row.add(getLabel(parseTime(seconds.get(title))));
 			row.add(getLabel(dateFormat.format(daemon.getCreatedDate(title))));
 			row.add(getLabel(dateFormat.format(daemon.getLastDate(title))));
 			row.setVisible(true);
 			row.setMaximumSize(new Dimension(800, 20));
+			titleLabel.addMouseListener(
+					Listeners.getMouseListenerMenu(
+							getMenuItems(titleLabel)
+							)
+					);
+			
 			contentPanel.add(row);
 		}
 		contentPanel.add(Box.createGlue());
@@ -112,7 +121,7 @@ public class TrackerFrame implements InitializingBean {
 		frame.setVisible(true);
 	}
 	
-	public JLabel getLabel(String text) {
+	private JLabel getLabel(String text) {
 		JLabel label = new JLabel();
 		label.setToolTipText(text);
 		// Limit maximum length of label to 30 characters
@@ -123,6 +132,23 @@ public class TrackerFrame implements InitializingBean {
 		label.setHorizontalAlignment(SwingConstants.CENTER);
 		label.setAlignmentX(JLabel.CENTER_ALIGNMENT);
 		return label;
+	}
+	
+	private Map<String, Runnable> getMenuItems(JLabel forTitleLabel) {
+		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+		StringSelection stringSelection = new StringSelection(forTitleLabel.getText());
+		final String title = forTitleLabel.getText();
+		Map<String, Runnable> options = new TreeMap<>();
+		options.put("Copy title", () -> clipboard.setContents(stringSelection, null));
+		options.put("Completely delete", () -> {
+			daemon.deleteTitle(title);
+			forTitleLabel.setText("<queued for removal, wait ~30sec>");
+			});
+		options.put("Undo deletion", () -> {
+			daemon.unqueDeletionOfTitle(title);
+			forTitleLabel.setText(title);
+			});
+		return options;
 	}
 	
 	private String parseTime(Integer seconds) {
