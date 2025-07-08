@@ -47,7 +47,7 @@ public class WinTrackerApp {
 				Thread.sleep(1000);
 			}
 		} catch (InterruptedException e) {
-			log.error("Application interrupted with failue");
+			log.error("Application interrupted with failure");
 		} finally {
 			context.close();
 		}
