@@ -1,19 +1,24 @@
-package wintracker.infrastructure;
+package wintracker.service;
 
 import java.util.*;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import com.sun.jna.*;
 import com.sun.jna.platform.win32.User32;
 
-import wintracker.service.IgnoreList;
-
+@Service
 public class WindowListener {
+	@Autowired
 	private IgnoreList ignoreList;
 	
-	public WindowListener(IgnoreList ignoreList) {
-		this.ignoreList = ignoreList;
-	}
-	
+	/**
+	 * Scans for open windows, using win32.User32, and returns
+	 * corresponding set of titles.
+	 * @return Set of String representations of window titles
+	 * @see com.sun.jna.platform.win32.User32
+	 */
 	public Set<String> getWindows() {
 		Set<String> windowTitles = new HashSet<>();
 	    

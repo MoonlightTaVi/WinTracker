@@ -7,14 +7,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
-import wintracker.infrastructure.WindowListener;
 import wintracker.model.WindowEntry;
 
 @Service
 public class TrackerDaemon implements Runnable {
+	/** Time when the app has been started. Not used currently IIRC. */
 	@Getter
 	private final LocalDateTime startedAt;
 	@Autowired
@@ -23,10 +22,10 @@ public class TrackerDaemon implements Runnable {
 	@Autowired
 	@Setter
 	private IgnoreList ignoreList;
+	@Autowired
+	private WindowListener listener;
 	@Getter
 	private volatile boolean running = true;
-	
-	private WindowListener listener;
 	/** Set of currently tracked windows */
 	private Set<String> trackedWindows = new HashSet<>();
 	/** 
@@ -41,11 +40,6 @@ public class TrackerDaemon implements Runnable {
 	
 	public TrackerDaemon() {
 		startedAt = LocalDateTime.now();
-	}
-	
-	@PostConstruct
-	public void init() {
-		 listener = new WindowListener(ignoreList);
 	}
 	
 	
