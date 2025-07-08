@@ -8,6 +8,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+/**
+ * This service is responsible for reading from
+ * and writing to the ignore-list file that
+ * contains RegEx lines of titles to be ignored
+ * by the WinTracker application.
+ */
 @Service
 public class IgnoreList {
 	private Logger log = LoggerFactory.getLogger(IgnoreList.class);
@@ -24,6 +30,11 @@ public class IgnoreList {
 		ignoredTitles = read();
 	}
 	
+	/**
+	 * Get all titles that must be ignored
+	 * by the application.
+	 * @return Set with RegEx's of titles to ignore.
+	 */
 	public Set<String> get() {
 		return ignoredTitles;
 	}

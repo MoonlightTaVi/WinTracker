@@ -11,6 +11,9 @@ import lombok.Getter;
 import lombok.Setter;
 import wintracker.model.WindowEntry;
 
+/**
+ * Main daemon process of the WinTracker application.
+ */
 @Service
 public class TrackerDaemon implements Runnable {
 	/** Time when the app has been started. Not used currently IIRC. */

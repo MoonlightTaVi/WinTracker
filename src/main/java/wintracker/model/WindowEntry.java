@@ -5,6 +5,10 @@ import java.time.LocalDateTime;
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * An entry (entity model) from the database.
+ * @see wintracker.db.WinHistoryRepo
+ */
 @Entity
 @Table(name = "history")
 public class WindowEntry {
@@ -12,17 +16,22 @@ public class WindowEntry {
 	@Getter
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
+	/** Window title. */
 	@Setter
 	@Getter
 	private String title = "<nil>";
+	/** Time (in sec) the window has been open for. */
 	@Setter
 	@Getter
 	private Integer secondsOpened = 0;
+	/** Time since tracking has started. */
 	@Getter
 	private LocalDateTime createdDate = LocalDateTime.now();
+	/** Last time secondsOpened has been updated. */
 	@Setter
 	@Getter
 	private LocalDateTime lastDate = LocalDateTime.now();
+	/** Not used ATM. */
 	@Setter
 	@Getter
 	private String meta;
@@ -30,15 +39,6 @@ public class WindowEntry {
 	public WindowEntry() {}
 	public WindowEntry(String title) {
 		this.title = title;
-	}
-	
-	public void updateFrom(WindowEntry anotherEntry) {
-		id = anotherEntry.id;
-		title = anotherEntry.title;
-		secondsOpened = anotherEntry.secondsOpened;
-		createdDate = anotherEntry.createdDate;
-		lastDate = anotherEntry.lastDate;
-		meta = anotherEntry.meta;
 	}
 	
 	@Override

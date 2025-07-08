@@ -20,6 +20,9 @@ import wintracker.service.IgnoreList;
 import wintracker.service.TrackerDaemon;
 import wintracker.util.Listeners;
 
+/**
+ * Application GUI window.
+ */
 @Component
 @Scope("prototype")
 public class TrackerFrame implements InitializingBean {
@@ -32,9 +35,15 @@ public class TrackerFrame implements InitializingBean {
 	private JPanel contentPanel = new JPanel();
 	private JTextField filterField = new JTextField();
 	
+	/**
+	 * Update displayed title without a filter.
+	 */
 	public void fetchData() {
 		fetchData(null);
 	}
+	/**
+	 * Update displayed title using a filter by title.
+	 */
 	public void fetchData(final String titleContains) {
 		contentPanel.removeAll();
 		
@@ -100,6 +109,9 @@ public class TrackerFrame implements InitializingBean {
 		contentPanel.repaint();
 	}
 	
+	/**
+	 * Show application window after initialization.
+	 */
 	@Override
 	public void afterPropertiesSet() {
 		// Filter entries by title bar
@@ -143,6 +155,12 @@ public class TrackerFrame implements InitializingBean {
 		frame.setVisible(true);
 	}
 	
+	/**
+	 * Factory of labels for this JFrame.
+	 * @param text Text to be displayed.
+	 * @param tooltip Tooltip text (on hover) to be displayed.
+	 * @return Configured JLabel.
+	 */
 	private JLabel getLabel(String text, String tooltip) {
 		JLabel label = new JLabel();
 		label.setToolTipText(tooltip);
@@ -156,6 +174,13 @@ public class TrackerFrame implements InitializingBean {
 		return label;
 	}
 	
+	/**
+	 * Generates pairs of Option text -> Runnable action
+	 * for pop-up menus, used only for title labels
+	 * (and contains predefined options).
+	 * @param forTitleLabel
+	 * @return
+	 */
 	private Map<String, Runnable> getMenuItems(JLabel forTitleLabel) {
 		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 		StringSelection stringSelection = new StringSelection(forTitleLabel.getText());
@@ -173,6 +198,12 @@ public class TrackerFrame implements InitializingBean {
 		return options;
 	}
 	
+	/**
+	 * Translates seconds to a human-readable
+	 * String form.
+	 * @param seconds Time in seconds.
+	 * @return Textual representation of time (?h?m?s).
+	 */
 	private String parseTime(Integer seconds) {
 		if (seconds == null) {
 			return "...";

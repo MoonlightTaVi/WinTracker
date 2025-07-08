@@ -8,6 +8,10 @@ import org.springframework.stereotype.Service;
 import com.sun.jna.*;
 import com.sun.jna.platform.win32.User32;
 
+/**
+ * This service scans for open windows on call.
+ * @see #getWindows()
+ */
 @Service
 public class WindowListener {
 	@Autowired

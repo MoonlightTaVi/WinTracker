@@ -10,11 +10,18 @@ import lombok.Setter;
 import wintracker.db.WinHistoryRepo;
 import wintracker.model.WindowEntry;
 
+/**
+ * Service to work with the database.
+ * Entities are returned from cache
+ * (fetched upon application start),
+ * but saving is performed upon DB itself.
+ */
 @Service
 public class PersistenceService implements InitializingBean {
 	@Autowired
 	@Setter
 	private WinHistoryRepo repository;
+	/** Cache of entries from the DB. */
 	private Set<WindowEntry> entries = new HashSet<>();
 	
 	public Optional<WindowEntry> findByTitle(String title) {
@@ -40,6 +47,9 @@ public class PersistenceService implements InitializingBean {
 		return new ArrayList<>(entries);
 	}
 
+	/**
+	 * Fetch Entities from the DB and cache them.
+	 */
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		entries.addAll(repository.findAll());
