@@ -26,6 +26,8 @@ public class TrackerDaemon implements Runnable {
 	private WindowListener listener;
 	@Getter
 	private volatile boolean running = true;
+	@Setter
+	private volatile boolean shutdownInitiated = false;
 	/** Set of currently tracked windows */
 	private Set<String> trackedWindows = new HashSet<>();
 	/** 
@@ -98,6 +100,14 @@ public class TrackerDaemon implements Runnable {
 	public void run() {
 		int seconds = 0;
 		while (running) {
+			/* Stop the daemon if it was
+			 * sleeping during shutdown process,
+			 * so it does not connect to the DB amidst it.
+			 */
+			if (shutdownInitiated) {
+				break;
+			}
+			
 			launchRemoval();
 			try {
 				Set<String> currentlyOpen =  listener.getWindows();

@@ -10,6 +10,11 @@ import org.springframework.stereotype.Component;
 
 import lombok.Setter;
 
+/**
+ * Launches the daemon. <br>
+ * Also checks if the context has been closed, then initiates
+ * daemon shutdown.
+ */
 @Component
 public class LifecycleHandler implements InitializingBean, ApplicationListener<ContextClosedEvent> {
 	@Autowired
@@ -30,6 +35,7 @@ public class LifecycleHandler implements InitializingBean, ApplicationListener<C
 	@Override
 	public void onApplicationEvent(ContextClosedEvent event) {
 		System.err.println("\nShutting down...");
+		daemon.setShutdownInitiated(true);
 		executor.shutdown();
 		System.err.println("Finished.");
 		System.exit(0);
