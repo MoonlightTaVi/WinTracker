@@ -8,11 +8,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import wintracker.infrastructure.WindowListener;
-
 @Service
 public class IgnoreList {
-	private Logger log = LoggerFactory.getLogger(WindowListener.class);
+	private Logger log = LoggerFactory.getLogger(IgnoreList.class);
 	/** File to read the list of ignored titles from. */
 	public final String ignoreListFile = "ignore-list.txt";
 	/** List of RegEx's for titles to ignore. */
