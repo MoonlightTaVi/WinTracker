@@ -35,7 +35,7 @@ public class LifecycleHandler implements InitializingBean, ApplicationListener<C
 	@Override
 	public void onApplicationEvent(ContextClosedEvent event) {
 		System.err.println("\nShutting down...");
-		daemon.setShutdownInitiated(true);
+		daemon.setRunning(false);
 		executor.shutdown();
 		System.err.println("Finished.");
 		System.exit(0);
