@@ -98,7 +98,7 @@ public class TrackerFrame implements InitializingBean {
 			row.setMaximumSize(new Dimension(800, 20));
 			titleLabel.addMouseListener(
 					Listeners.getMouseListenerMenu(
-							getMenuItems(titleLabel)
+							getMenuItems(titleLabel, title)
 							)
 					);
 			
@@ -156,9 +156,11 @@ public class TrackerFrame implements InitializingBean {
 	}
 	
 	/**
-	 * Factory of labels for this JFrame.
+	 * Factory of labels for this JFrame. Reduces the label
+	 * text length (adding "..." to the end) if it's too long
+	 * and adds a tool-tip text.
 	 * @param text Text to be displayed.
-	 * @param tooltip Tooltip text (on hover) to be displayed.
+	 * @param tooltip Tool-tip text (on hover) to be displayed.
 	 * @return Configured JLabel.
 	 */
 	private JLabel getLabel(String text, String tooltip) {
@@ -178,12 +180,13 @@ public class TrackerFrame implements InitializingBean {
 	 * Generates pairs of Option text -> Runnable action
 	 * for pop-up menus, used only for title labels
 	 * (and contains predefined options).
-	 * @param forTitleLabel
+	 * @param forTitleLabel Label to bind mouse listener to.
+	 * @param fullTitle Full title of the respective window (for copying).
 	 * @return
 	 */
-	private Map<String, Runnable> getMenuItems(JLabel forTitleLabel) {
+	private Map<String, Runnable> getMenuItems(JLabel forTitleLabel, String fullTitle) {
 		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-		StringSelection stringSelection = new StringSelection(forTitleLabel.getText());
+		StringSelection stringSelection = new StringSelection(fullTitle);
 		final String title = forTitleLabel.getText();
 		Map<String, Runnable> options = new TreeMap<>();
 		options.put("Copy title", () -> clipboard.setContents(stringSelection, null));
